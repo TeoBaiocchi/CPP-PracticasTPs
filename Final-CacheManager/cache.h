@@ -15,7 +15,7 @@ class CacheManager{
     bool write_file (string, T);
 
     public:
-    CacheManager(int); // recibe la capacidad en el int
+    CacheManager(int); // Constructor, recibe la capacidad en el int
     ~CacheManager();
 
     void insert(string key, T obj);
@@ -24,6 +24,9 @@ class CacheManager{
 // Agregar todas las funciones necesarias
 };
 
+
+//NT: Sobre uso de templates, esencialmente es lo que permite que una función acepte tipos de forma dinámica
+//Es decir, un objeto T en vez de un tipo particular.
 template <class T>
 CacheManager <T>::CacheManager(int cap){
     capacity = cap;
