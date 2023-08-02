@@ -64,13 +64,15 @@ void CacheManager<T>::show_cache(){
 template <class T>
 void CacheManager<T>::insert(string key, T obj){
 
-   if(cache_data.find(key) != cache_data.end()){
+   auto it = cache_data.find(key);
+   if(it != cache_data.end()){
         //Si se encuentra el elemento que se esta tratando de insertar se trata de una actualización.
-        cache_data[key] = make_pair(obj, indice++);
+        it->second = make_pair(obj, indice++);
+        //cache_data[key] = make_pair(obj, indice++);
         //no entiendo por qué da error
-        //return;
+        //TO DO: Metodo para actualizar en archivo tmb
+        return;
    }
-
 
    if(cache_data.size() >= capacity){
         //En caso de que la capacidad sea alcanzada, borramos el LRU antes de realizar la inserción.
@@ -78,6 +80,7 @@ void CacheManager<T>::insert(string key, T obj){
         cout << "borrando a " << keyLRU << endl;
         cache_data.erase(cache_data.find(keyLRU));
    }
+
     cout << "insertando a " << key << endl;
     cache_data.insert(make_pair(key, make_pair(obj, indice++)));
     write_file(key, obj);
@@ -91,7 +94,7 @@ T CacheManager<T>::get(string key){
     auto it = cache_data.find(key);
     if(it != cache_data.end()){ //Es decir, si se encuentra el elemento antes del fin del map
         //Al encontrarlo también actualizamos su valor de acceso, como indica el ejemplo.
-        cache_data[key] = make_pair(cache_data[key].first, ++indice);
+        cache_data[key] = make_pair(cache_data[key].first, indice++);
         return cache_data[key];
     }
     return NULL; //TO DO: aca es donde al no encontrarse debería irse a memoria a buscarlo y devolver error si no está
