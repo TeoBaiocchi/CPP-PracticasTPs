@@ -17,6 +17,15 @@ public:
 
 const string Student::class_name = "StudentClass";
 
+ostream &operator<<(ostream &os, Student estudiante)
+{
+    cout << "Student Object : " << estudiante.id << " , " << estudiante.value << " , " << estudiante.data << endl;
+    return os;
+}
+
+
+
+
 int main()
 {
 
@@ -50,8 +59,3 @@ int main()
     return 0;
 }
 
-ostream &operator<<(ostream &os, Student estudiante)
-{
-    cout << "Student Object : " << estudiante.id << " , " << estudiante.value << " , " << estudiante.data << endl;
-    return os;
-}
