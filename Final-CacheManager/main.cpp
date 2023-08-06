@@ -34,6 +34,7 @@ int main()
     my_cache.insert("1", Student(1, 23, "student2"));
     my_cache.insert("2", Student(2, 25, "student3"));
     my_cache.insert("3", Student(3, 29, "student4"));
+    Student return_obj = my_cache.get("0");
     my_cache.show_cache();
     // 1 2 y 3, cuando inserta a 3 borra a 0
 
@@ -43,7 +44,7 @@ int main()
     // 2 tiene que cambiar a EZE
 
     cout << " <<<<<< <<<<<<<<<<<< <<<<<<<<<<<< <<<<<<<<<<< <<<<<<<<<<<< <<<<" << endl;
-    Student return_obj = my_cache.get("0"); // not in cache but in filesystem
+    return_obj = my_cache.get("0"); // not in cache but in filesystem
     Student return_obj1 = my_cache.get("19");
     cout << " <<<<<< <<<<<<<<<<<< <<<<<<<<<<<< <<<<<<<<<<< <<<<<<<<<<<< <<<<" << endl;
     my_cache.show_cache();

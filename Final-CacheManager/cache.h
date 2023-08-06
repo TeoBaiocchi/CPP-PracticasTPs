@@ -3,6 +3,7 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -28,7 +29,9 @@ private:
     string getKeyLRU();
     bool write_file(string, T, string);
     fstream encontrarEnArchivo(string);
-    void actualizarEnArchivo(string, T);
+    bool existeKeyEnArchivo(string);
+    void actualizarEnArchivoConVectores(string, T);
+    void insertarEnCache(string, T);
     void clear_file();
 };
 
@@ -69,33 +72,34 @@ void CacheManager<T>::insert(string key, T obj)
     }
 
     // Primero revisamos si se trata de una key existente para ver si es una actualizacion o una insercion plana
-    fstream archivo = encontrarEnArchivo(key);
-    if (!archivo.eof())
+    // No podemos evitar revisar el archivo por la existencia de la key, ya que en caso de no estar en la cache, puede aun estar tratandose de actualizar un objeto que exista guardado en memoria.
+    if (existeKeyEnArchivo(key))
     {
-        // No podemos evitar revisar el archivo por la existencia de la key, ya que en caso de no estar en la cache, puede aun estar tratandose de actualizar un objeto que exista guardado en memoria.
+        cout << "Existe en el archivo" << endl;
         auto it = cache_data.find(key);
         if (it == cache_data.end())
         {
+            cout << "Pero no en la cache" << endl;
             // Si se da que existe, pero no esta en cache, lo traemos con get.
             get(key);
             it = cache_data.find(key);
         }
         it->second = make_pair(obj, indice); // El indice ya es incrementado por get.
-        archivo.close();
-        actualizarEnArchivo(key, obj);      //Es necesario también actualizar su referencia en memoria
+        actualizarEnArchivoConVectores(key, obj);      //Es necesario también actualizar su referencia en memoria
         return;
     }
 
     //Si no se da lo anterior, procedemos a insertarlo de forma corriente.
-    if (cache_data.size() >= capacity)
-    {
-        // En caso de que la capacidad sea alcanzada, borramos el LRU antes de realizar la inserción.
-        string keyLRU = getKeyLRU();
-        cout << "borrando a " << keyLRU << endl;
-        cache_data.erase(cache_data.find(keyLRU));
-    }
+    insertarEnCache(key, obj);
+}
 
-    cout << "insertando a " << key << endl;
+template <class T>
+void CacheManager<T>::insertarEnCache(string key, T obj){
+    if (cache_data.size() >= capacity)
+    { // En caso de que la capacidad sea alcanzada, borramos el LRU antes de realizar la inserción.
+    string keyLRU = getKeyLRU();
+    cache_data.erase(cache_data.find(keyLRU));
+    }
     cache_data.insert(make_pair(key, make_pair(obj, indice++)));
     write_file(key, obj, this->cacheFileName);
 }
@@ -106,19 +110,21 @@ T CacheManager<T>::get(string key)
     T obj; // Asumimos que la clase va a tener un constructor vacio, de lo contrario esto no es posible
     auto it = cache_data.find(key);
     if (it != cache_data.end())
-    { // Es decir, si se encuentra el elemento antes del fin del map
+    {
         // Al encontrarlo también actualizamos su valor de acceso, como indica el ejemplo.
         cache_data[key] = make_pair(cache_data[key].first, indice++);
         obj = cache_data[key].first;
         return obj;
     }
 
+    //En caso de no encontrarse en cache.
     fstream archivo = encontrarEnArchivo(key);
     cout << "No me rompi abriendo el fstream" << endl;
     if (!archivo.eof())
     {
         archivo.read(reinterpret_cast<char *>(&obj), sizeof(T));
-        insert(key, obj); // Insert se va a encargar de traerlo a memoria y actualizar su indice
+        cout << "Si bro, lei el objeto y es " << obj;
+        insertarEnCache(key, obj); // Insert se va a encargar de traerlo a memoria y actualizar su indice
     }
     else
     {
@@ -149,7 +155,7 @@ bool CacheManager<T>::write_file(string key, T obj, string nombreArchivo)
 {
     ofstream archivo(nombreArchivo, ios::app);
     archivo << key << this->separadorKeyObj;
-    archivo.write(reinterpret_cast<char *>(&obj), sizeof(T));
+    archivo.write(reinterpret_cast<char * const>(&obj), sizeof(T));
     archivo << endl;
     archivo.close();
     return true;
@@ -164,61 +170,70 @@ fstream CacheManager<T>::encontrarEnArchivo(string key)
 
     for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
     {
-        if (lineaNro % 2 == 0 && linea == key) // En las lineas pares se guardan las keys
+        if (lineaNro % 2 == 0 && linea == key){ // En las lineas pares se guardan las keys
+            getline(archivo, linea);
             break;
+        }
     }
     return archivo;
 }
 
-
 template <class T>
-void CacheManager<T>::actualizarEnArchivo(string key, T obj)
+bool CacheManager<T>::existeKeyEnArchivo(string key)
 {
-    string linea, lineaActual;
-    T objAux;
-    bool escribir = false;
+    string linea;
+    fstream archivo(this->cacheFileName, ios::in);
 
-    // Cambiamos el nombre del archivo original para poder reemplazarlo luego.
-    if (rename(this->cacheFileName.c_str(), ("aux" + this->cacheFileName).c_str()) != 0)
-    {
-        perror("ERROR: Error renombrando archivo -> ");
-    }
-
-    // Creamos el archivo secundario con el nombre del original
-    ofstream archivoAux(this->cacheFileName, ios::trunc);
-    archivoAux.close();
-
-    // Empezamos a copiar el archivo existente en otro archivo, obviando el objeto que queremos actualizar
-
-    fstream archivo(("aux" + this->cacheFileName), ios::in);
     for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
     {
-        // En las lineas pares se guardan las keys
-        if (lineaNro % 2 == 0)
-        {
-            lineaActual = linea;
-        } else {
-            archivo.read(reinterpret_cast<char *>(&objAux), sizeof(T));
-            escribir = true;
-        }
-
-        if(escribir && lineaActual != key){
-            write_file(linea, objAux, this->cacheFileName);
-            escribir = false;
+        if (lineaNro % 2 == 0 && linea == key){ // En las lineas pares se guardan las keys
+            return true;
         }
     }
+    return false;
+}
 
-    // Ahora que tenemos una copia donde efectivamente borramos el objeto de interes, escribimos la versión actualizada
-    write_file(key, obj, this->cacheFileName);
 
+
+template <class T>
+void CacheManager<T>::actualizarEnArchivoConVectores(string key, T obj)
+{
+
+    T objAux;
+    vector<string> indices;
+    vector<T> objetos;
+    string linea;
+
+    //Copio el contenido del archivo
+    fstream archivo((this->cacheFileName), ios::in);
+    cout << "LECTURA DE ARCHIVO: " << endl;
+    for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
+    {
+            if(lineaNro % 2 == 0){
+                indices.push_back(linea);
+            } else {
+                archivo.read(reinterpret_cast<char * const>(&objAux), sizeof(T));
+                objetos.push_back(objAux);
+            }
+    }
     archivo.close();
 
+    //Limpio el archivo
+    remove(this->cacheFileName.c_str());
+//    ostream archivo2((this->cacheFileName), ios::trunc);
+//    archivo2.close();
 
-    // Finalmente, borramos el archivo original dejando unicamente el actualizado
-    if (remove(("aux" + this->cacheFileName).c_str()) != 0)
-    {
-        perror("ERROR: Error borrando archivo -> ");
+    //Vuelvo a armar el archivo, omitiendo el indice desactualizado
+    for(int i = 0; i < indices.size(); i++){
+        cout << "OBJETO : " << indices[i] << " " << objetos[i];
+        if(indices[i] != key){
+            cout << " (VALIDADO)" << endl;
+            write_file(indices[i], objetos[i], this->cacheFileName);
+        }
     }
+
+    //Finalmente agrego el valor actualizado
+    write_file(key, obj, this->cacheFileName);
 }
 
 
