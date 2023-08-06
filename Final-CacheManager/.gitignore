@@ -3,7 +3,12 @@
 
 # But not these files...
 !.gitignore
+!cache.h
+!clasePersistencia.h
+!memoria.h
+!main.cpp
+!funcionesoriginales(viejas).cpp
+!makefile
 !.h
 !.cpp
-!makefile
 !.pdf

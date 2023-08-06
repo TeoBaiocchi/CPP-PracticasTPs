@@ -1,16 +1,11 @@
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <utility>
-#include <string>
-#include <vector>
+#include "clasePersistencia.h"
+#include "memoria.h"
 
 using namespace std;
 
 template <class T>
 class CacheManager
 {
-    // El dios que vive en mi computadora me dijo que hiciera esto para evitar un warning porque el metodo size retorna un unsigned. Lo peor es que lo solucionó el problema
     size_t capacity;
 
     unsigned int indice = 1;              // La variable indice unicamente va a aumentar con cada operación, por lo que es conveniente disponer de ella como un contador propio de la clase
@@ -18,32 +13,30 @@ class CacheManager
 
     //Cuando se inserte el primer elemento a la caché, se asignará un nombre para generar el archivo en memoria y usar de manera generalizada.
     string cacheFileName;
-
-    // Cadena que separará los indices del objeto al momento de escribir en memoria
-    // Importante que quede como salto de linea porque hay funciones hechas en torno a eso
-    string separadorKeyObj = "\n";
+    MemoriaManager<T> mm;
 
 public:
     CacheManager(int);
     ~CacheManager();
 
-
+    //Permite guardar en cache (y en memoria) un objeto con una llave
     void insert(string key, T obj);
+
+    //Dada una key obtiene el objeto, si existe. Primero revisa en cache, luego en memoria. De no existir devuelve un objeto vacio de indice ""
     T get(string key);
+
+    //Retorna la key a la que le corresponda el menor indice de la caché.
     string getKeyLRU();
+
+    //Print()
     void show_cache();
 
-    void generarArchivoTest(T);
+    //TEST
+    void generarArchivoTest(T, T);
 
 private:
 
-    bool existeKeyEnMemoria(string);
-    ifstream encontrarEnMemoria(string);
-
-    bool write_file(string, T, string);
-    void limpiarMemoria();
-
-    void actualizarEnMemoria(string, T);
+    //Funcion interna utilizada por insert para efectuar la inserción.
     void persistirEnCacheyMemoria(string, T);
 };
 
@@ -81,29 +74,31 @@ template <class T>
 void CacheManager<T>::insert(string key, T obj)
 {
     if (cache_data.size() == 0)
-    {   //En caso de que sea la primer inserción, asignamos el nombre de archivo y nos aseguramos de que esté limpio de resiudos
+    {
+        //Si se trata de la primera inserción de nuestra caché, generamos el nombre que tendra la memoria
+        //y generamos el manejador que se encargará de todas las llamadas posteriores a memoria.
         this->cacheFileName = "cache_" + obj.class_name + ".txt";
-        limpiarMemoria();
+        MemoriaManager<T> mm1(this->cacheFileName);
+        this->mm = mm1;
+        mm.limpiarMemoria();
     }
 
     // Primero revisamos si se trata de una key existente para ver si es una actualizacion o una insercion plana
     // No podemos evitar revisar el archivo por la existencia de la key, ya que en caso de no estar en la cache, puede aun estar tratandose de actualizar un objeto que exista guardado en memoria.
-    if (existeKeyEnMemoria(key))
+    if (mm.existeKey(key))
     {
-        cout << "Existe en el archivo" << endl;
         auto it = cache_data.find(key);
         if (it == cache_data.end())
         {
-            cout << "Pero no en la cache" << endl;
-            // Si se da que existe, pero no esta en cache, lo traemos con get.
-            get(key);
+            get(key);                       // Si se da que existe, pero no esta en cache, lo traemos con get.
             it = cache_data.find(key);
         }
-        it->second = make_pair(obj, indice);            // El indice ya es incrementado por get.
-        actualizarEnMemoria(key, obj);      //Es necesario también actualizar su referencia en memoria
+        it->second = make_pair(obj, indice); // El indice ya es incrementado por get.
+        mm.actualizar(key, obj);            //Es necesario también actualizar su referencia en memoria
         return;
     }
 
+    //Si no se trata de una actualización, realizamos la inserción estandar
     persistirEnCacheyMemoria(key, obj);
 }
 
@@ -117,11 +112,10 @@ void CacheManager<T>::persistirEnCacheyMemoria(string key, T obj){
     string keyLRU = getKeyLRU();
     cache_data.erase(cache_data.find(keyLRU));
     }
+
     cache_data.insert(make_pair(key, make_pair(obj, indice++)));
-    write_file(key, obj, this->cacheFileName);
+    mm.write_file(key, obj);
 }
-
-
 
 
 template <class T>
@@ -137,129 +131,38 @@ T CacheManager<T>::get(string key)
         return obj;
     }
 
-    //En caso de no encontrarse en cache.
-    ifstream archivo = encontrarEnMemoria(key);
-    cout << "No me rompi abriendo el fstream" << endl;
-    if (!archivo.eof())
-    {
-        archivo.read(reinterpret_cast<char *>(&obj), sizeof(T));
-        cout << "Si bro, lei el objeto y es " << obj;
-        persistirEnCacheyMemoria(key, obj); // Insert se va a encargar de traerlo a memoria y actualizar su indice
+    //En caso de no encontrarse en cache, revisamos si existe en memoria
+    if(mm.existeKey(key)){
+            obj = mm.obtenerByKey(key);
+            persistirEnCacheyMemoria(key, obj); // Este metodo se va a encargar de traerlo a memoria y actualizar su indice
+    } else {
+        cout << "ERROR: Se intento acceder a un objeto de indice inexistente. " << endl;
     }
-    else
-    {
-        perror("ERROR: Se intento acceder a un elemento inexistente - ");
-    }
-    archivo.close();
+
     return obj;
 }
 
-
-
 template <class T>
-bool CacheManager<T>::write_file(string key, T obj, string nombreArchivo)
-{
-    ofstream archivo(nombreArchivo, ios::out | ios::binary);
-    archivo << key << this->separadorKeyObj;
-    archivo.write(reinterpret_cast<char * const>(&obj), sizeof(T));
-    archivo << endl;
-    archivo.close();
-    return true;
-}
+void CacheManager<T>::generarArchivoTest(T obj, T obj2){
+    remove("test.txt");
+    string nombreArchivo = "test.txt";
 
+    ClaseDePersistencia<T> c1("a", obj);
+    ClaseDePersistencia<T> c2("b", obj2);
 
-template <class T>
-void CacheManager<T>::generarArchivoTest(T obj){
-    string nombreArchivo = "individual.txt";
     ofstream archivo(nombreArchivo, ios::out | ios::binary);
-    archivo.write(reinterpret_cast<char * const>(&obj), sizeof(T));
+    archivo.write(reinterpret_cast<char * const>(&c1), sizeof(ClaseDePersistencia<T>));
+    archivo.write(reinterpret_cast<char * const>(&c2), sizeof(ClaseDePersistencia<T>));
     archivo.close();
-    T leido;
+
+    ClaseDePersistencia<T> leido = c1;
     ifstream lectura(nombreArchivo, ios::in | ios::binary);
-    lectura.read(reinterpret_cast<char * const>(&leido), sizeof(T));
-    cout << leido << endl;
+    lectura.read(reinterpret_cast<char * const>(&leido), sizeof(ClaseDePersistencia<T>));
+    cout << "Lei del archivo: INDICE "<< leido.key << " - " << leido.obj << endl;
+    lectura.read(reinterpret_cast<char * const>(&leido), sizeof(ClaseDePersistencia<T>));
+    cout << "Lei del archivo: INDICE "<< leido.key << " - " << leido.obj << endl;
     archivo.close();
 }
-
-
-
-
-template <class T>
-ifstream CacheManager<T>::encontrarEnMemoria(string key)
-{
-    string linea;
-
-    ifstream archivo(this->cacheFileName, ios::in | ios::binary);
-
-    for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
-    {
-        if (lineaNro % 2 == 0 && linea == key){ // En las lineas pares se guardan las keys
-            getline(archivo, linea);
-            break;
-        }
-    }
-    return archivo;
-}
-
-
-
-
-template <class T>
-bool CacheManager<T>::existeKeyEnMemoria(string key)
-{
-    string linea;
-    ifstream archivo(this->cacheFileName, ios::in | ios::binary);
-
-    for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
-    {
-        if (lineaNro % 2 == 0 && linea == key){ // En las lineas pares se guardan las keys
-            return true;
-        }
-    }
-    return false;
-}
-
-
-
-
-template <class T>
-void CacheManager<T>::actualizarEnMemoria(string key, T obj)
-{
-    T objAux;
-    vector<string> indices;
-    vector<T> objetos;
-    string linea;
-
-    //Copio el contenido del archivo
-    ifstream archivo((this->cacheFileName), ios::in | ios::binary);
-    cout << "LECTURA DE ARCHIVO: " << endl;
-    for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
-    {
-            if(lineaNro % 2 == 0){
-                indices.push_back(linea);
-            } else {
-                archivo.read(reinterpret_cast<char * const>(&objAux), sizeof(T));
-                objetos.push_back(objAux);
-            }
-    }
-    archivo.close();
-
-    //Limpio el archivo
-    remove(this->cacheFileName.c_str());
-
-    //Vuelvo a armar el archivo, omitiendo el indice desactualizado
-    for(int i = 0; i < indices.size(); i++){
-        cout << "OBJETO : " << indices[i] << " " << objetos[i];
-        if(indices[i] != key){
-            cout << " (VALIDADO)" << endl;
-            write_file(indices[i], objetos[i], this->cacheFileName);
-        }
-    }
-
-    //Finalmente agrego el valor actualizado
-    write_file(key, obj, this->cacheFileName);
-}
-
 
 
 
@@ -280,11 +183,3 @@ string CacheManager<T>::getKeyLRU()
 }
 
 
-
-
-template <class T>
-void CacheManager<T>::limpiarMemoria()
-{
-    remove(this->cacheFileName.c_str());
-    return;
-}

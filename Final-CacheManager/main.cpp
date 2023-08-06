@@ -37,9 +37,15 @@ int main()
 
 void stockVideoClub(){
 
+    CacheManager<Pelicula> my_cache(5);
+
+//    cout << "TEST" << endl;
+//    my_cache.generarArchivoTest(Pelicula("a", "Asterix En Roma", 400, 3), Pelicula("b", "buenardo", 100, 10));
+//    cout << endl << endl << endl;
+
     cout << "1) generamos una cache de 5 espacios y guardamos 3 peliculas: " << endl;
 
-    CacheManager<Pelicula> my_cache(5);
+
     my_cache.insert("a", Pelicula("a", "Asterix En Roma", 400, 3));
     my_cache.insert("b", Pelicula("b", "Borat II", 100, 2));
     my_cache.insert("c", Pelicula("c", "Charlie y La Fabrica de Chocolates", 700, 5));
