@@ -81,8 +81,8 @@ void CacheManager<T>::insert(string key, T obj)
             it = cache_data.find(key);
         }
         it->second = make_pair(obj, indice); // El indice ya es incrementado por get.
-        actualizarEnArchivo(key, obj);      //Es necesario también actualizar su referencia en memoria
         archivo.close();
+        actualizarEnArchivo(key, obj);      //Es necesario también actualizar su referencia en memoria
         return;
     }
 
@@ -148,8 +148,6 @@ template <class T>
 bool CacheManager<T>::write_file(string key, T obj, string nombreArchivo)
 {
     ofstream archivo(nombreArchivo, ios::app);
-    if (!archivo.is_open())
-        return false;
     archivo << key << this->separadorKeyObj;
     archivo.write(reinterpret_cast<char *>(&obj), sizeof(T));
     archivo << endl;
@@ -176,30 +174,37 @@ fstream CacheManager<T>::encontrarEnArchivo(string key)
 template <class T>
 void CacheManager<T>::actualizarEnArchivo(string key, T obj)
 {
-    string lineaObj;
+    string linea, lineaActual;
     T objAux;
+    bool escribir = false;
 
-    // Cambiamos el nombre del archivo original para poder pisarlo luego.
+    // Cambiamos el nombre del archivo original para poder reemplazarlo luego.
     if (rename(this->cacheFileName.c_str(), ("aux" + this->cacheFileName).c_str()) != 0)
     {
-        perror("ERROR: Error renombrando archivo - ");
+        perror("ERROR: Error renombrando archivo -> ");
     }
 
     // Creamos el archivo secundario con el nombre del original
     ofstream archivoAux(this->cacheFileName, ios::trunc);
+    archivoAux.close();
 
     // Empezamos a copiar el archivo existente en otro archivo, obviando el objeto que queremos actualizar
-    string linea;
+
     fstream archivo(("aux" + this->cacheFileName), ios::in);
     for (int lineaNro = 0; getline(archivo, linea); lineaNro++)
     {
         // En las lineas pares se guardan las keys
-        if (lineaNro % 2 == 0 && linea != key)
+        if (lineaNro % 2 == 0)
         {
-            getline(archivo, lineaObj);
-            lineaNro++;
+            lineaActual = linea;
+        } else {
             archivo.read(reinterpret_cast<char *>(&objAux), sizeof(T));
-            write_file(lineaObj, objAux, this->cacheFileName);
+            escribir = true;
+        }
+
+        if(escribir && lineaActual != key){
+            write_file(linea, objAux, this->cacheFileName);
+            escribir = false;
         }
     }
 
@@ -207,12 +212,12 @@ void CacheManager<T>::actualizarEnArchivo(string key, T obj)
     write_file(key, obj, this->cacheFileName);
 
     archivo.close();
-    archivoAux.close();
 
-    // Finalmente, reemplazamos el archivo original con el nuevo donde se borró el objeto y su key definitivamente
-    if (rename(("aux" + this->cacheFileName).c_str(), this->cacheFileName.c_str()) != 0)
+
+    // Finalmente, borramos el archivo original dejando unicamente el actualizado
+    if (remove(("aux" + this->cacheFileName).c_str()) != 0)
     {
-        perror("ERROR: Error renombrando archivo - ");
+        perror("ERROR: Error borrando archivo -> ");
     }
 }
 
