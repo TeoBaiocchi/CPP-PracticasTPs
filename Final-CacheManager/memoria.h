@@ -161,7 +161,7 @@ void MemoriaManager<T>::imprimirMemoria()
     ifstream archivo((this->memoriaFileName), ios::in | ios::binary);
     while (archivo && archivo.read(reinterpret_cast<char *>(&c), sizeof(ClaseDePersistencia<T>)))
     {
-        cout << "Leyendo memoria: " << c.dato << endl;
+        cout << "Dato en memoria: " << c.dato << endl;
     }
     archivo.close();
 }

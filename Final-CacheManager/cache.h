@@ -15,7 +15,6 @@ class CacheManager
     string cacheFileName;
 
 public:
-    MemoriaManager<T> mm;
     CacheManager(int);
     ~CacheManager();
 
@@ -31,9 +30,21 @@ public:
     // Print()
     void show_cache();
 
+    //Print de contenidos en memoria
+    void imprimirMemoria(){
+        if(cache_data.size() > 0){
+        cout << endl <<"Imprimiendo contenido en Memoria: " << endl << endl;
+        mm.imprimirMemoria();
+        cout << "- - - - - - - - - -" << endl;
+        }
+    }
+
 private:
     // Funcion interna utilizada por insert para efectuar la inserción.
     void persistirEnCacheyMemoria(string, T);
+
+    MemoriaManager<T> mm;
+
 
     void logger(string msg)
     {

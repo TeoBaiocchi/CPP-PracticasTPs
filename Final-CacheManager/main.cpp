@@ -56,6 +56,11 @@ int main()
 void stockVideoClub()
 {
 
+    cout << "Trabajo Practico Final - Disenio Orientado a Objetos - AUS 2023" << endl;
+    cout << "Cache Manager" << endl;
+    cout << "Teo Baiocchi - Andres Grillo" << endl << endl << endl;
+
+
     CacheManager<Pelicula> my_cache(5);
 
     cout << "1) generamos una cache de 5 espacios y guardamos 3 peliculas: " << endl;
@@ -63,35 +68,35 @@ void stockVideoClub()
     my_cache.insert("b", Pelicula("Borat II", 100, 2));
     my_cache.insert("c", Pelicula("Charlie y La Fabrica de Chocolates", 700, 5));
     my_cache.show_cache();
-    my_cache.mm.imprimirMemoria();
+    my_cache.imprimirMemoria();
 
     cout << endl
          << endl
          << "2) Agregamos una 4ta pelicula " << endl;
     my_cache.insert("d", Pelicula("Druk", 500, 3));
     my_cache.show_cache();
-    my_cache.mm.imprimirMemoria();
+    my_cache.imprimirMemoria();
 
     cout << endl
          << endl
          << "3) Actualizamos precio y stock de la pelicula 'a' " << endl;
     my_cache.insert("a", Pelicula("Asterix En Roma", 500, 2));
     my_cache.show_cache();
-    my_cache.mm.imprimirMemoria();
+    my_cache.imprimirMemoria();
 
     cout << endl
          << endl
          << "4) Agregamos una 5ta pelicula " << endl;
     my_cache.insert("e", Pelicula("Harry potter y la piedra filosofal", 500, 19));
     my_cache.show_cache();
-    my_cache.mm.imprimirMemoria();
+    my_cache.imprimirMemoria();
 
     cout << endl
          << endl
          << "5) Agregamos una 6ta pelicula " << endl;
     my_cache.insert("f", Pelicula("Indiana Jones la ultima cruzada", 789, 20));
     my_cache.show_cache();
-    my_cache.mm.imprimirMemoria();
+    my_cache.imprimirMemoria();
 }
 
 // -------------------------
