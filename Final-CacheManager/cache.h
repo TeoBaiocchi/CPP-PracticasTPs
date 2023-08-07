@@ -13,9 +13,10 @@ class CacheManager
 
     //Cuando se inserte el primer elemento a la caché, se asignará un nombre para generar el archivo en memoria y usar de manera generalizada.
     string cacheFileName;
-    MemoriaManager<T> mm;
+
 
 public:
+    MemoriaManager<T> mm;
     CacheManager(int);
     ~CacheManager();
 
@@ -31,13 +32,14 @@ public:
     //Print()
     void show_cache();
 
-    //TEST
-    void generarArchivoTest(T, T);
-
 private:
 
     //Funcion interna utilizada por insert para efectuar la inserción.
     void persistirEnCacheyMemoria(string, T);
+
+    void logger(string msg){
+        cout << "Log CacheManager: " << msg << endl;
+    }
 };
 
 template <class T>
@@ -77,7 +79,7 @@ void CacheManager<T>::insert(string key, T obj)
     {
         //Si se trata de la primera inserción de nuestra caché, generamos el nombre que tendra la memoria
         //y generamos el manejador que se encargará de todas las llamadas posteriores a memoria.
-        this->cacheFileName = "cache_" + obj.class_name + ".txt";
+        this->cacheFileName = "cache_" + obj.class_name + ".dat";
         MemoriaManager<T> mm1(this->cacheFileName);
         this->mm = mm1;
         mm.limpiarMemoria();
@@ -142,29 +144,6 @@ T CacheManager<T>::get(string key)
     return obj;
 }
 
-template <class T>
-void CacheManager<T>::generarArchivoTest(T obj, T obj2){
-    remove("test.txt");
-    string nombreArchivo = "test.txt";
-
-    ClaseDePersistencia<T> c1("a", obj);
-    ClaseDePersistencia<T> c2("b", obj2);
-
-    ofstream archivo(nombreArchivo, ios::out | ios::binary);
-    archivo.write(reinterpret_cast<char * const>(&c1), sizeof(ClaseDePersistencia<T>));
-    archivo.write(reinterpret_cast<char * const>(&c2), sizeof(ClaseDePersistencia<T>));
-    archivo.close();
-
-    ClaseDePersistencia<T> leido = c1;
-    ifstream lectura(nombreArchivo, ios::in | ios::binary);
-    lectura.read(reinterpret_cast<char * const>(&leido), sizeof(ClaseDePersistencia<T>));
-    cout << "Lei del archivo: INDICE "<< leido.key << " - " << leido.obj << endl;
-    lectura.read(reinterpret_cast<char * const>(&leido), sizeof(ClaseDePersistencia<T>));
-    cout << "Lei del archivo: INDICE "<< leido.key << " - " << leido.obj << endl;
-    archivo.close();
-}
-
-
 
 template <class T>
 string CacheManager<T>::getKeyLRU()
@@ -181,5 +160,11 @@ string CacheManager<T>::getKeyLRU()
     }
     return keyActual;
 }
+
+
+
+
+
+
 
 

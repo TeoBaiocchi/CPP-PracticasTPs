@@ -1,23 +1,27 @@
 #include <string>
-
+#define LONGKEY 16
 using namespace std;
 
 template <class T>
 class ClaseDePersistencia
 {
 public:
-    string key;
+    char key [LONGKEY];
     T dato;
 
     ClaseDePersistencia();
-     ClaseDePersistencia(string, T);
+    ClaseDePersistencia(string, T);
     ~ClaseDePersistencia();
 };
 
 template <class T>
 ClaseDePersistencia<T>::ClaseDePersistencia(string key, T generico)
 {
-    this->key = key;
+    int i;
+    for(i = 0; i < key.length() && i < LONGKEY; i++){
+        this->key[i] = key[i];
+    }
+    this->key[i] = '\0';
     this->dato = generico;
 }
 

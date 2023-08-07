@@ -1,18 +1,33 @@
 #include "cache.h"
+#define LONGARRAY 255
 
 using namespace std;
 
 class Pelicula
 {
-    string id;
-    string nombre;
+    char nombre[LONGARRAY];
     int precio;
     int stock;
 
 public:
-    static const string class_name;                                                            // Cada clase tiene un static llamado : class_name
-    Pelicula(string _id, string _nombre, int _precio, int _stock) : id(_id), nombre(_nombre), precio(_precio), stock(_stock){}
+    static const string class_name;  // Cada clase tiene un static llamado : class_name
+
+    Pelicula(string _nombre, int _precio, int _stock){
+        int i;
+        for(i = 0; i < _nombre.length() && i < LONGARRAY ; i++){
+            nombre[i] = _nombre[i];
+        }
+        nombre[i] = '\0';
+        precio = _precio;
+        stock = _stock;
+    }
+
     friend ostream &operator<<(ostream &, Pelicula);
+
+    void print(){
+        cout << "Pelicula '" << nombre << "' - $" << precio << " - En Stock: " << stock << endl;
+    }
+
     Pelicula(){};
     ~Pelicula(){};
 };
@@ -21,7 +36,7 @@ const string Pelicula::class_name = "PeliculasClass";
 
 ostream &operator<<(ostream &os, Pelicula pelicula)
 {
-    cout << "Pelicula (" << pelicula.id << "): '" << pelicula.nombre << "' - $" << pelicula.precio << " - En Stock: " << pelicula.stock << endl;
+    pelicula.print();
     return os;
 }
 
@@ -39,25 +54,21 @@ void stockVideoClub(){
 
     CacheManager<Pelicula> my_cache(5);
 
-//    cout << "TEST" << endl;
-//    my_cache.generarArchivoTest(Pelicula("a", "Asterix En Roma", 400, 3), Pelicula("b", "buenardo", 100, 10));
-//    cout << endl << endl << endl;
-
     cout << "1) generamos una cache de 5 espacios y guardamos 3 peliculas: " << endl;
 
-
-    my_cache.insert("a", Pelicula("a", "Asterix En Roma", 400, 3));
-    my_cache.insert("b", Pelicula("b", "Borat II", 100, 2));
-    my_cache.insert("c", Pelicula("c", "Charlie y La Fabrica de Chocolates", 700, 5));
+    my_cache.insert("a", Pelicula("Asterix en Roma", 400, 3));
+    my_cache.insert("b", Pelicula("Borat II", 100, 2));
+    my_cache.insert("c", Pelicula("Charlie y La Fabrica de Chocolates", 700, 5));
     my_cache.show_cache();
 
     cout << endl << endl << "2) Agregamos una 4ta pelicula " << endl;
-    my_cache.insert("d", Pelicula("d", "Druk", 500, 3));
+    my_cache.insert("d", Pelicula("Druk", 500, 3));
     my_cache.show_cache();
 
     cout << endl << endl << "3) Actualizamos precio y stock de la pelicula 'a' " << endl;
-    my_cache.insert("a", Pelicula("a", "Asterix En Roma", 500, 2));
+    my_cache.insert("a", Pelicula("Asterix En Roma", 500, 2));
     my_cache.show_cache();
+    my_cache.mm.imprimirMemoria();
 }
 
 
@@ -74,6 +85,11 @@ public:
     static const string class_name;
     Student(int _key, int _value, const char *_data) : id(_key), value(_value), data(_data) {} // Cada clase tiene un static llamado : class_name
     friend ostream &operator<<(ostream &, Student);
+
+    void print(){
+        cout << "Student Object : " << id << " , " << value << " , " << data << endl;
+    }
+
     Student(){};
     ~Student(){};
 };

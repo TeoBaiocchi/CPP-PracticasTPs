@@ -17,8 +17,8 @@ public:
     ~MemoriaManager();
 
     //Dada una key y un objeto, lo inserta en memoria. Si no se aclara un archivo, se usara memoriaFileName
-    bool write_file(string, T);
-    bool write_file(string, T, string);
+    void write_file(string, T);
+    void write_file(string, T, string);
 
     //Dada una key y un objeto, actualiza su valor en memoria.
     //Para lograr esto, copia todo el contenido del archivo original en uno nuevo, exceptuando el objeto a actualizar
@@ -34,7 +34,14 @@ public:
     //Regenerar el archivo en limpio.
     void limpiarMemoria();
 
+    void imprimirMemoria();
+
     ClaseDePersistencia<T> obtenerPersistenciaByKey(string);
+
+    private:
+        void logger(string msg){
+        cout << "Log MemoryManager: " << msg << endl;
+    }
 };
 
 template <class T>
@@ -53,16 +60,16 @@ MemoriaManager<T>::~MemoriaManager(){}
 
 
 template <class T>
-bool MemoriaManager<T>::write_file(string key, T obj){
+void MemoriaManager<T>::write_file(string key, T obj){
     return write_file(key, obj, this->memoriaFileName);
 }
 template <class T>
-bool MemoriaManager<T>::write_file(string key, T obj, string fileName){
+void MemoriaManager<T>::write_file(string key, T obj, string fileName){
     ofstream archivo(fileName, ios::out | ios::binary);
     ClaseDePersistencia<T> c(key, obj);
     archivo.write(reinterpret_cast<char * const>(&c), sizeof(ClaseDePersistencia<T>));
+    obj.print();
     archivo.close();
-    return true;
 }
 
 
@@ -76,7 +83,7 @@ bool MemoriaManager<T>::actualizar(string indice, T obj){
     //Vuelco el contenido de la memoria en los vectores, exceptuando el objeto a actualizar
     ifstream archivo((this->memoriaFileName), ios::in | ios::binary);
     while(archivo && !archivo.eof()){
-        archivo.read(reinterpret_cast<char *>(&c), sizeof(ClaseDePersistencia<T>));
+        archivo.read(reinterpret_cast<char * const>(&c), sizeof(ClaseDePersistencia<T>));
         if(c.key != indice)
             datos.push_back(c);
     }
@@ -99,7 +106,7 @@ bool MemoriaManager<T>::existeKey(string indice){
     ClaseDePersistencia<T> c;
     ifstream archivo((this->memoriaFileName), ios::in | ios::binary);
      while(archivo && !archivo.eof()){
-        archivo.read(reinterpret_cast<char *>(&c), sizeof(ClaseDePersistencia<T>));
+        archivo.read(reinterpret_cast<char * const>(&c), sizeof(ClaseDePersistencia<T>));
         if(c.key == indice){
             archivo.close();
             return true;
@@ -141,6 +148,18 @@ ClaseDePersistencia<T> MemoriaManager<T>::obtenerPersistenciaByKey(string indice
 template <class T>
 void MemoriaManager<T>::limpiarMemoria(){
     remove(this->memoriaFileName.c_str());
+}
+
+
+template <class T>
+void MemoriaManager<T>::imprimirMemoria(){
+    ClaseDePersistencia<T> c;
+    ifstream archivo((this->memoriaFileName), ios::in | ios::binary);
+     while(archivo && !archivo.eof()){
+        archivo.read(reinterpret_cast<char *>(&c), sizeof(ClaseDePersistencia<T>));
+        cout << "Leyendo memoria: " << c.dato << endl;
+    }
+    archivo.close();
 }
 
 
