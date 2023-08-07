@@ -6,7 +6,7 @@ template <class T>
 class ClaseDePersistencia
 {
 public:
-    char key [LONGKEY];
+    char key[LONGKEY];
     T dato;
 
     ClaseDePersistencia();
@@ -18,7 +18,8 @@ template <class T>
 ClaseDePersistencia<T>::ClaseDePersistencia(string key, T generico)
 {
     int i;
-    for(i = 0; i < key.length() && i < LONGKEY; i++){
+    for (i = 0; (size_t)i < key.length() && i < LONGKEY; i++)
+    {
         this->key[i] = key[i];
     }
     this->key[i] = '\0';
@@ -26,9 +27,7 @@ ClaseDePersistencia<T>::ClaseDePersistencia(string key, T generico)
 }
 
 template <class T>
-ClaseDePersistencia<T>::ClaseDePersistencia(){}
+ClaseDePersistencia<T>::ClaseDePersistencia() {}
 
 template <class T>
-ClaseDePersistencia<T>::~ClaseDePersistencia(){}
-
-
+ClaseDePersistencia<T>::~ClaseDePersistencia() {}

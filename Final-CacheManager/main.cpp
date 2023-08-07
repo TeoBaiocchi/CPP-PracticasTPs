@@ -10,11 +10,13 @@ class Pelicula
     int stock;
 
 public:
-    static const string class_name;  // Cada clase tiene un static llamado : class_name
+    static const string class_name; // Cada clase tiene un static llamado : class_name
 
-    Pelicula(string _nombre, int _precio, int _stock){
+    Pelicula(string _nombre, int _precio, int _stock)
+    {
         int i;
-        for(i = 0; i < _nombre.length() && i < LONGARRAY ; i++){
+        for (i = 0; (size_t)i < _nombre.length() && i < LONGARRAY; i++)
+        {
             nombre[i] = _nombre[i];
         }
         nombre[i] = '\0';
@@ -24,7 +26,8 @@ public:
 
     friend ostream &operator<<(ostream &, Pelicula);
 
-    void print(){
+    void print()
+    {
         cout << "Pelicula '" << nombre << "' - $" << precio << " - En Stock: " << stock << endl;
     }
 
@@ -46,32 +49,50 @@ void ejemploOriginal_ConStudent();
 int main()
 {
     stockVideoClub();
-    //ejemploOriginal_ConStudent();
+    // ejemploOriginal_ConStudent();
     return 0;
 }
 
-void stockVideoClub(){
+void stockVideoClub()
+{
 
     CacheManager<Pelicula> my_cache(5);
 
     cout << "1) generamos una cache de 5 espacios y guardamos 3 peliculas: " << endl;
-
     my_cache.insert("a", Pelicula("Asterix en Roma", 400, 3));
     my_cache.insert("b", Pelicula("Borat II", 100, 2));
     my_cache.insert("c", Pelicula("Charlie y La Fabrica de Chocolates", 700, 5));
     my_cache.show_cache();
+    my_cache.mm.imprimirMemoria();
 
-    cout << endl << endl << "2) Agregamos una 4ta pelicula " << endl;
+    cout << endl
+         << endl
+         << "2) Agregamos una 4ta pelicula " << endl;
     my_cache.insert("d", Pelicula("Druk", 500, 3));
     my_cache.show_cache();
+    my_cache.mm.imprimirMemoria();
 
-    cout << endl << endl << "3) Actualizamos precio y stock de la pelicula 'a' " << endl;
+    cout << endl
+         << endl
+         << "3) Actualizamos precio y stock de la pelicula 'a' " << endl;
     my_cache.insert("a", Pelicula("Asterix En Roma", 500, 2));
     my_cache.show_cache();
     my_cache.mm.imprimirMemoria();
+
+    cout << endl
+         << endl
+         << "4) Agregamos una 5ta pelicula " << endl;
+    my_cache.insert("e", Pelicula("Harry potter y la piedra filosofal", 500, 19));
+    my_cache.show_cache();
+    my_cache.mm.imprimirMemoria();
+
+    cout << endl
+         << endl
+         << "5) Agregamos una 6ta pelicula " << endl;
+    my_cache.insert("f", Pelicula("Indiana Jones la ultima cruzada", 789, 20));
+    my_cache.show_cache();
+    my_cache.mm.imprimirMemoria();
 }
-
-
 
 // -------------------------
 // -------------------------
@@ -86,7 +107,8 @@ public:
     Student(int _key, int _value, const char *_data) : id(_key), value(_value), data(_data) {} // Cada clase tiene un static llamado : class_name
     friend ostream &operator<<(ostream &, Student);
 
-    void print(){
+    void print()
+    {
         cout << "Student Object : " << id << " , " << value << " , " << data << endl;
     }
 
@@ -102,7 +124,8 @@ ostream &operator<<(ostream &os, Student estudiante)
     return os;
 }
 
-void ejemploOriginal_ConStudent(){
+void ejemploOriginal_ConStudent()
+{
     CacheManager<Student> my_cache(3);
     my_cache.insert("0", Student(0, 22, "student1"));
     my_cache.insert("1", Student(1, 23, "student2"));
@@ -110,7 +133,6 @@ void ejemploOriginal_ConStudent(){
     my_cache.insert("3", Student(3, 29, "student4"));
     Student return_obj = my_cache.get("0");
     my_cache.show_cache();
-
 
     cout << "---------------------- UPDATE -----------------------" << endl;
     my_cache.insert("2", Student(22, 222, "EZE"));
@@ -123,11 +145,10 @@ void ejemploOriginal_ConStudent(){
     my_cache.show_cache();
 
     my_cache.insert("2", Student(2, 25, "EZE"));
-    my_cache.show_cache () ;
+    my_cache.show_cache();
 
-    my_cache.insert (" 9 ", Student(1, 5, "Nine"));
-    my_cache.insert (" 9 ", Student (1, 5, "Nine"));
-    my_cache.insert (" 9 ", Student (1, 5, "Nine"));
+    my_cache.insert(" 9 ", Student(1, 5, "Nine"));
+    my_cache.insert(" 9 ", Student(1, 5, "Nine"));
+    my_cache.insert(" 9 ", Student(1, 5, "Nine"));
     my_cache.show_cache();
 }
-
